@@ -6,9 +6,10 @@
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
 static char *font = "Inconsolata LGC:style=Bold:size=9.5:antialias=true:hinting=true";
+//static char *font = "Source Code Pro:style=Bold:size=9.5:antialias=true:hinting=true";
 //static char *font = "Inconsolata LGC:style=Bold:size=7.5:antialias=true:hinting=true";
 /* alacritty currently uses 10, 9 (x,y) */
-static int borderpx = 6; /* padding around terminal */
+static int borderpx = 9; /* padding around terminal */
 // static int borderpx = 26; /* padding around terminal */
 
 /*
@@ -30,8 +31,16 @@ char *vtiden = "\033[?6c";
 
 /* Kerning / character bounding-box multipliers */
 static float cwscale = 0.875;
-//static float chscale = 1.0;
+//static float cwscale = 1.0;
 static float chscale = 1.0;
+/* character relative offset */
+static float cxscale = 0.0;
+static float cyscale = 0.0;
+
+// /* these work to eliminate line gaps */
+// static float chscale = 0.75;
+// //static float cyscale = -0.275;  // if win.cx/y are scaled by cw/h
+// static float cyscale = -0.20;  // if win.cx/y are not scaled by cw/h
 
 /*
  * word delimiter string
@@ -200,8 +209,8 @@ static Shortcut shortcuts[] = {
 	/* TODO: set up way to print out current font value */
 //	{ TERMMOD,              XK_Prior,       zoom,           {.f = +1} },
 //	{ TERMMOD,              XK_Next,        zoom,           {.f = -1} },
-	{ TERMMOD,              XK_Prior,       zoom,           {.f = +0.1} },
-	{ TERMMOD,              XK_Next,        zoom,           {.f = -0.1} },
+	{ TERMMOD,              XK_Prior,       zoom,           {.f = +0.5} },
+	{ TERMMOD,              XK_Next,        zoom,           {.f = -0.5} },
 	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
 	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },

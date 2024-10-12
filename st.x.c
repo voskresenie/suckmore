@@ -83,6 +83,8 @@ typedef struct {
 	int w, h; /* window width and height */
 	int ch; /* char height */
 	int cw; /* char width  */
+	int cx; /* char height */
+	int cy; /* char width  */
 	int mode; /* window state/mode flags */
 	int cursor; /* cursor style */
 } TermWindow;
@@ -1031,6 +1033,10 @@ xloadfonts(const char *fontstr, double fontsize)
 	/* Setting character width and height. */
 	win.cw = ceilf(dc.font.width * cwscale);
 	win.ch = ceilf(dc.font.height * chscale);
+	//win.cx = ceilf(dc.font.width * cwscale * cxscale);
+	//win.cy = ceilf(dc.font.height * chscale * cyscale);
+	win.cx = ceilf(dc.font.width * cxscale);
+	win.cy = ceilf(dc.font.height * cyscale);
 
 	FcPatternDel(pattern, FC_SLANT);
 	FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
@@ -1288,8 +1294,10 @@ xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x
 		if (glyphidx) {
 			specs[numspecs].font = font->match;
 			specs[numspecs].glyph = glyphidx;
-			specs[numspecs].x = (short)xp;
-			specs[numspecs].y = (short)yp;
+			specs[numspecs].x = (short)xp + win.cx;
+			specs[numspecs].y = (short)yp + win.cy;
+			// specs[numspecs].x = (short)xp + win.cw * cxscale;
+			// specs[numspecs].y = (short)yp + win.ch * cyscale;
 			xp += runewidth;
 			numspecs++;
 			continue;
@@ -1362,8 +1370,8 @@ xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x
 
 		specs[numspecs].font = frc[f].font;
 		specs[numspecs].glyph = glyphidx;
-		specs[numspecs].x = (short)xp;
-		specs[numspecs].y = (short)yp;
+		specs[numspecs].x = (short)xp + win.cx;
+		specs[numspecs].y = (short)yp + win.cy;
 		xp += runewidth;
 		numspecs++;
 	}
