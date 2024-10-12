@@ -103,7 +103,7 @@ drw_free(Drw *drw)
  * drw_fontset_create instead.
  */
 static Fnt *
-xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern)
+xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern, int fontoffset)
 {
 	Fnt *font;
 	XftFont *xfont = NULL;
@@ -134,6 +134,7 @@ xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern)
 	}
 
 	font = ecalloc(1, sizeof(Fnt));
+	xfont->max_advance_width += fontoffset;
 	font->xfont = xfont;
 	font->pattern = pattern;
 	font->h = xfont->ascent + xfont->descent;
@@ -154,7 +155,7 @@ xfont_free(Fnt *font)
 }
 
 Fnt*
-drw_fontset_create(Drw* drw, const char *fonts[], size_t fontcount)
+drw_fontset_create(Drw* drw, const char *fonts[], size_t fontcount, int fontoffset)
 {
 	Fnt *cur, *ret = NULL;
 	size_t i;
@@ -163,7 +164,7 @@ drw_fontset_create(Drw* drw, const char *fonts[], size_t fontcount)
 		return NULL;
 
 	for (i = 1; i <= fontcount; i++) {
-		if ((cur = xfont_create(drw, fonts[fontcount - i], NULL))) {
+		if ((cur = xfont_create(drw, fonts[fontcount - i], NULL, fontoffset))) {
 			cur->next = ret;
 			ret = cur;
 		}
@@ -365,7 +366,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 			FcPatternDestroy(fcpattern);
 
 			if (match) {
-				usedfont = xfont_create(drw, NULL, match);
+				usedfont = xfont_create(drw, NULL, match, 0);
 				if (usedfont && XftCharExists(drw->dpy, usedfont->xfont, utf8codepoint)) {
 					for (curfont = drw->fonts; curfont->next; curfont = curfont->next)
 						; /* NOP */
