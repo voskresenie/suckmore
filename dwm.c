@@ -24,6 +24,9 @@
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
+/* BEGIN grid */
+#include <stdbool.h>
+/* END grid */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -97,6 +100,9 @@ struct Client {
 	Client *snext;
 	Monitor *mon;
 	Window win;
+	/* BEGIN grid */
+	int gx, gy, gw, gh;
+	/* END grid */
 };
 
 typedef struct {
@@ -119,6 +125,9 @@ struct Monitor {
 	int by;               /* bar geometry */
 	int mx, my, mw, mh;   /* screen size */
 	int wx, wy, ww, wh;   /* window area  */
+	/* BEGIN grid */
+	int gmw, gmh;         /* grid size */
+	/* END grid */
 	unsigned int seltags;
 	unsigned int sellt;
 	unsigned int tagset[2];
@@ -137,9 +146,104 @@ typedef struct {
 	const char *instance;
 	const char *title;
 	unsigned int tags;
+	/* BEGIN grid */
+	unsigned int x, y, w, h;
+	/* END grid */
 	int isfloating;
 	int monitor;
 } Rule;
+
+/* BEGIN rebirth */
+// typedef struct {
+// 	char stext[256];
+// 	int screen;
+// 	int sw, sh;           /* X display screen geometry width, height */
+// 	int bh;               /* bar height */
+// 	int lrpad;            /* sum of left and right padding for text */
+// 	// int (*xerrorxlib)(Display *, XErrorEvent *);
+// 	// unsigned int numlockmask = 0;
+// 	// void (*handler[LASTEvent]) (XEvent *) = {};
+// 	// Atom wmatom[WMLast], netatom[NetLast];
+// 	// int running = 1;
+// 	Cur *cursor[CurLast];
+// 	Clr **scheme;
+// 	Display *dpy;
+// 	// Drw *drw;
+// 	Monitor *mons, *selmon;
+// 	Window root, wmcheckwin;
+// 	/*
+// 	 *
+// 	 * State = {
+// 	 *   Monitors = [
+// 	 *     {
+// 	 *       Clients = [
+// 	 *         {
+// 	 *           Window (XID),
+// 	 *           x, y, w, h,
+// 	 *           oldx, oldy, oldw, oldh,
+// 	 *           basew, baseh, incw, inch, maxw, maxh, minw, minh, hintsvalid,
+// 	 *           bw, oldbw,
+// 	 *           gx, gy, gw, gh; // dwm-grid
+// 	 *           tags,
+// 	 *           isfixed, isfloating, isurgent,
+// 	 *           neverfocus, oldstate, isfullscreen,
+// 	 *         },
+// 	 *         ...
+// 	 *       ]
+// 	 *     },
+// 	 *     ...
+// 	 *   ]
+// 	 * }
+// 	 *
+// 	 **/
+// } State;
+// typedef struct StateMonitor StateMonitor;
+// typedef struct StateClient StateClient;
+// struct StateClient {
+// 	unsigned long XID; // see /usr/include/X11/X.h
+// 
+// 	char name[256];
+// 	float mina, maxa;
+// 	int x, y, w, h;
+// 	int oldx, oldy, oldw, oldh;
+// 	int basew, baseh, incw, inch, maxw, maxh, minw, minh, hintsvalid;
+// 	int bw, oldbw;
+// 	unsigned int tags;
+// 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
+// 	StateClient *next;
+// 	StateClient *snext;
+// 	Monitor *mon;
+// 	Window win;
+// 	/* BEGIN grid */
+// 	int gx, gy, gw, gh;
+// 	/* END grid */
+// };
+// struct StateMonitor {
+// 	char ltsymbol[16];
+// 	float mfact;
+// 	int nmaster;
+// 	int num;
+// 	int by;               /* bar geometry */
+// 	int mx, my, mw, mh;   /* screen size */
+// 	int wx, wy, ww, wh;   /* window area  */
+// 	/* BEGIN grid */
+// 	int gmw, gmh;         /* grid size */
+// 	/* END grid */
+// 	unsigned int seltags;
+// 	unsigned int sellt;
+// 	unsigned int tagset[2];
+// 	int showbar;
+// 	int topbar;
+// 	StateClient *clients;
+// 	StateClient *sel;
+// 	StateClient *stack;
+// 	StateMonitor *next;
+// 	Window barwin;
+// 	const Layout *lt[2];
+// };
+// 
+// 
+/* END rebirth */
 
 /* function declarations */
 static void applyrules(Client *c);
@@ -204,6 +308,10 @@ static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setup(void);
 static void seturgent(Client *c, int urg);
+/* BEGIN shift */
+static void shifttag(const Arg *arg);
+static void shiftview(const Arg *arg);
+/* END shift */
 static void showhide(Client *c);
 static void spawn(const Arg *arg);
 static void tag(const Arg *arg);
@@ -233,6 +341,19 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
+/* BEGIN grid */
+static bool gridfree(Monitor *m, int x, int y, bool headonly, bool self);
+static bool gridspace(Monitor *m, int x, int y, int w, int h, bool headonly, bool mvrs);
+static void gridsetpos(Client *c, int x, int y, int w, int h);
+static void gridmove(const Arg *arg);
+static void gridresize(const Arg *arg);
+static void gridnew(Client *c, int x, int y, int w, int h);
+static void gridtile(Monitor *m);
+/* END grid */
+/* BEGIN dwm-rebirth */
+static void savestate(const Arg *arg);
+static void loadstate(const Arg *arg);
+/* END dwm-rebirth */
 
 /* variables */
 static const char broken[] = "broken";
@@ -298,6 +419,14 @@ applyrules(Client *c)
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
 			c->isfloating = r->isfloating;
+			/* BEGIN grid */
+			if (!c->isfloating) {
+				c->gx = r->x;
+				c->gy = r->y;
+				c->gw = r->w;
+				c->gh = r->h;
+			}
+			/* END grid */
 			c->tags |= r->tags;
 			for (m = mons; m && m->num != r->monitor; m = m->next);
 			if (m)
@@ -644,6 +773,10 @@ createmon(void)
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
+	/* BEGIN grid */
+	m->gmw = gridwidth;
+	m->gmh = gridheight;
+	/* END grid */
 	return m;
 }
 
@@ -1051,6 +1184,16 @@ manage(Window w, XWindowAttributes *wa)
 	} else {
 		c->mon = selmon;
 		applyrules(c);
+		/* BEGIN grid */
+		/* TODO: move this somewhere else, so that windows don't get assigned a
+		 * grid space until going into grid mode */
+		if (c->gw > 0 && c->gh > 0) {
+		    gridnew(c, c->gx, c->gy, c->gw, c->gh);
+		} else {
+			/* TODO: make defaults be determined by c->x, c->y, c->w, c-> h */
+		    gridnew(c, 0, 0, 2, 2);
+		}
+		/* END grid */
 	}
 
 	if (c->x + WIDTH(c) > c->mon->wx + c->mon->ww)
@@ -1559,10 +1702,10 @@ setup(void)
 	sh = DisplayHeight(dpy, screen);
 	root = RootWindow(dpy, screen);
 	drw = drw_create(dpy, screen, root, sw, sh);
-	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
+	if (!drw_fontset_create(drw, fonts, LENGTH(fonts), fontoffset))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
-	bh = drw->fonts->h + 2;
+	bh = drw->fonts->h + 12;
 	updategeom();
 	/* init atoms */
 	utf8string = XInternAtom(dpy, "UTF8_STRING", False);
@@ -1625,6 +1768,49 @@ seturgent(Client *c, int urg)
 	XSetWMHints(dpy, c->win, wmh);
 	XFree(wmh);
 }
+
+void
+shifttag(const Arg *arg)
+{
+	/* unsigned int newtags; */
+
+	if (!selmon->sel)
+		return;
+
+	/* TODO
+	unsigned int shift = (arg->ui % LENGTH(selmon->sel->tags));
+	newtags = ((selmon->sel->tags << shift) | (selmon->sel->tags >> (LENGTH(selmon->sel->tags)-shift))) & TAGMASK;
+	if (newtags) {
+		selmon->sel->tags = newtags;
+		focus(NULL);
+		arrange(selmon);
+	}
+	*/
+}
+
+/* BEGIN voskarch */
+void
+shiftview(const Arg *arg)
+{
+	unsigned int newtags;
+	int shift, ntags;
+
+	ntags = LENGTH(tags);
+	shift = (arg->i % ntags);
+	if (shift < 0)
+		shift += ntags;
+
+	newtags = ((selmon->tagset[selmon->seltags] << shift) | (selmon->tagset[selmon->seltags] >> (ntags-shift))) & TAGMASK;
+
+	if (arg->i % ntags == 0)
+		return;
+	selmon->seltags ^= 1; /* toggle sel tagset */
+	if (newtags)
+		selmon->tagset[selmon->seltags] = newtags;
+	focus(NULL);
+	arrange(selmon);
+}
+/* END voskarch */
 
 void
 showhide(Client *c)
@@ -2139,6 +2325,322 @@ zoom(const Arg *arg)
 		return;
 	pop(c);
 }
+
+/* BEGIN rebirth */
+#ifdef __REBIRTH__
+/* TODO: restore windows after restart of dwm */
+void
+saveclientstate()
+{
+	Client *c;
+	Monitor *m;
+
+	XDeleteProperty(dpy, root, netatom[NetClientList]);
+	for (m = mons; m; m = m->next)
+		/*
+		monitor
+			unsigned int seltags;
+			unsigned int sellt;
+			unsigned int tagset[2];
+		*/
+		for (c = m->clients; c; c = c->next)
+			continue;
+			/* write (unsigned char *) &(c->win),
+				(unsigned char *) &(c->win),
+				unsigned int tags;
+				int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
+			* */
+			//(unsigned char *) &(c->win)
+}
+#endif
+/* END rebirth */
+
+/* BEGIN grid */
+/* TODO: make it so the same window can be in multiple positions in different
+ * tags,
+ * ie pos = { { x0, y0, w0, h0 }, { x1, y1, w1, h1 }, ..., { xN, yN, wN, hN } }
+ *   where N = LENGTH(tags)  */
+bool
+gridfree(Monitor *m, int x, int y, bool headonly, bool self)
+{
+	Client *c;
+	if (x < 0 || x >= m->gmw || y < 0 || y >= m->gmh) return false;
+
+	for (c = m->clients; c; c = c->next)
+		if (ISVISIBLE(c) && !c->isfloating
+			&& x >= c->gx && x < c->gx + c->gw
+			&& ((!headonly && y >= c->gy && y < c->gy + c->gh) || y == c->gy)
+			&& (c != m->sel || !self)) return false;
+
+	return true;
+}
+
+/* TODO: make this return 3 possible values:
+ * - free - no conflict
+ * - free_header - conflict, but top row of new window does not overlap with top
+ *   row of existing  window
+ * - occupied - conflict on body and header
+ * This will allow for a sensible backup should there be no free area.
+ **/
+bool
+gridspace(Monitor *m, int x, int y, int w, int h, bool headonly, bool mvrs)
+{
+	int i, j;
+
+	for (i = x; i < x + w; i++)
+		for (j = y; j < y + h; j++)
+			if (!gridfree(m, i, j, headonly, mvrs)) return false;
+
+	return true;
+}
+
+void
+gridsetpos(Client *c, int x, int y, int w, int h)
+{
+	c->gx = x;
+	c->gy = y;
+	c->gw = w;
+	c->gh = h;
+}
+
+void
+gridmove(const Arg *arg)
+{
+	int x, y;
+
+	Monitor *m = selmon;
+	Client *c = m->sel;
+
+	x = c->gx + ((int *)arg->v)[0];
+	y = c->gy + ((int *)arg->v)[1];
+
+	//if (gridspace(m, x, y, c->gw, c->gh, true))
+	gridsetpos(c, x, y, c->gw, c->gh);
+
+	arrange(m);
+}
+
+void
+gridresize(const Arg *arg)
+{
+	int w, h;
+
+	Monitor *m = selmon;
+	Client *c = m->sel;
+
+	w = c->gw + ((int *)arg->v)[0];
+	h = c->gh + ((int *)arg->v)[1];
+
+	//if (gridspace(m, c->gx, c->gy, w, h, true))
+	gridsetpos(c, c->gx, c->gy, w, h);
+
+	arrange(m);
+}
+
+/* TODO: add support for preferred vs min width/height */
+void
+gridnew(Client *c, int x, int y, int w, int h)
+{
+	unsigned int i, j;
+
+	for (j = y; j < c->mon->gmh; j++)
+		for (i = x; i < c->mon->gmw; i++)
+			if (gridspace(c->mon, i, j, w, h, false, false)) {
+				gridsetpos(c, i, j, w, h);
+				return;
+			}
+
+	/* TODO: try to find a not-ugly way of combining this logic with previous
+	 * loop */
+	for (j = y; j < c->mon->gmh; j++)
+		for (i = x; i < c->mon->gmw; i++)
+			if (gridspace(c->mon, i, j, w, h, true, false)) {
+				gridsetpos(c, i, j, w, h);
+				return;
+			}
+
+	/* TODO: as fallback, maybe move to new tag? Or resize existing windows?
+	 * idk. */
+	gridsetpos(c, 0, 0, w, h);
+}
+
+void
+gridtile(Monitor *m)
+{
+	Client *c;
+
+	/* usable width/height */
+	int uw, uh;
+	/* cell width/height */
+    int cw, ch;
+    /* pane width/height, horizontal gap, vertical gap */
+    int pw, ph, pxgap, pygap;
+	/* x-offset, y-offset, bar height */
+	int xoffs, yoffs, mbarh;
+
+	//uw = m->mw;           // should this be m->ww
+	//uh = m->mh - mbarh;   // and m->wh
+	//uw = m->ww;
+	//uh = m->wh;
+	//mbarh = 29; // replace with bh?
+
+    cw = cellwidth;
+    ch = cellheight;
+
+	pxgap = 4;
+	pygap = 1;
+
+	// dimensions of a single grid pane, including gaps
+	pw = (m->ww / cw) / m->gmw;                /* 274 / 12 = 22, remainder: 10 */
+	ph = (m->wh / ch) / m->gmh;                /*  65 /  9 =  7, remainder:  2 */
+
+	xoffs = (((m->ww - cw * pw * m->gmw) + cw * pxgap) / 2);
+	yoffs = (((m->wh - ch * ph * m->gmh) + ch * pygap) / 2);
+
+	for (c = nexttiled(m->clients); c; c = nexttiled(c->next)) {
+		resize(c,
+			//m->wx + (cw * pw * c->gx) + ((m->ww % (cw * m->gmw)) + cw * pxgap) / 2 - c->bw,
+			//m->wy + (ch * ph * c->gy) + ((m->wh % (ch * m->gmh)) + ch * pygap) / 2 - c->bw,
+			m->wx + (cw * pw * c->gx) + ((m->ww - cw * pw * m->gmw + cw * pxgap) / 2) - c->bw,
+			m->wy + (ch * ph * c->gy) + ((m->wh - ch * ph * m->gmh + ch * pygap) / 2) - c->bw,
+			        (cw * pw * c->gw) - cw * pxgap,
+			        (ch * ph * c->gh) - ch * pygap,
+			//m->wx + (cw * pw * c->gx) + xoffs - c->bw,
+			//m->wy + (ch * ph * c->gy) + yoffs - c->bw,
+			//        (cw * pw * c->gw) - cw * pxgap,
+			//        (ch * ph * c->gh) - ch * pygap,
+
+			//(c->gw*pw - pxgap) * cw,
+			//(c->gh*ph - pygap) * ch,
+			0);
+	}
+}
+
+#define ROUND(A, B)             (((A) / B) * B)
+void
+_gridtile(Monitor *m)
+{
+	Client *c;
+
+	/* usable width, usable height, pane width, pane height */
+	int uw, uh, pw, ph;
+	/* left gap, top gap, horizontal gap, vertical gap */
+	int xoffs, yoffs, hgap, vgap, mbarh;
+
+	mbarh = 29;
+
+	int screenwidth = selmon->mw;
+	int screenheight = selmon->mh - mbarh;
+
+	int hgapcells = 4;
+	int vgapcells = 1;
+
+	// hgap = hgapcells * cellwidth;
+	// vgap = vgapcells * cellheight;
+
+	// // number of horizontal and vertical cells on the screen
+	// int xcells = screenwidth  / cellwidth;      /*  1920     /  7 = 274, remainder: 2 */
+	// int ycells = screenheight / cellheight;     /* (1200-29) / 18 =  65, remainder: 1 */
+
+	// dimensions of a single gridcell, including gaps
+	int gridcellwidth  = (screenwidth  / cellwidth)  / gridwidth;                /* 274 / 12 = 22, remainder: 10 */
+	int gridcellheight = (screenheight / cellheight) / gridheight;               /*  65 /  9 =  7, remainder:  2 */
+	//  // OR:
+	//  int gridcellwidth  = (xcells - (gridwidth  + 1) * hgapcells) / gridwidth;    // (274 - (12 + 1) * 4) / 12 = 18, remainder: 6
+	//  int gridcellheight = (ycells - (gridheight + 1) * vgapcells) / gridheight;   // ( 65 - ( 9 + 1) * 1) /  9 =  6, remainder: 1
+	//  // ( xgridcellsize + xgap ) * xgridcells + xgap = xcells
+	//  // xgridcellsize = ((xcells - xgap) / xgridcells) - xgap
+	
+	xoffs = ((screenwidth  - cellwidth  * gridcellwidth  * gridwidth ) + hgapcells * cellwidth ) / 2 - borderpx;
+	yoffs = ((screenheight - cellheight * gridcellheight * gridheight) + vgapcells * cellheight) / 2 - borderpx + mbarh;
+
+	for (c = nexttiled(m->clients); c; c = nexttiled(c->next)) {
+		resize(c,
+			c->gx*gridcellwidth  * cellwidth  + xoffs,
+			c->gy*gridcellheight * cellheight + yoffs,
+			(c->gw*gridcellwidth  - hgapcells) * cellwidth,
+			(c->gh*gridcellheight - vgapcells) * cellheight,
+			0);
+	}
+
+
+	//  /* TODO:questionable use of -1 */
+	//  uw = (selmon->mw / cellwidth  / m->gmw - 1) * cellwidth  * m->gmw;  /* divide by x then multiply by */
+	//  uh = (selmon->mh / cellheight / m->gmh - 1) * cellheight * m->gmh;  /* it to remove the remainder */
+	//  //uw = selmon->mw - cellwidth  * m->gmw;
+	//  //uh = selmon->mh - cellheight * m->gmh;
+
+	//  xoffs = (selmon->mw - uw - 2*borderpx + hgap) / 2;
+	//  yoffs = (selmon->mh - uh - 2*borderpx + vgap) / 2;
+
+	//  pw = ROUND(uw / m->gmw, cellwidth);
+	//  ph = ROUND(uh / m->gmh, cellheight);
+
+	//  for (c = nexttiled(m->clients); c; c = nexttiled(c->next)) {
+	//  	resize(c,
+	//  		c->gx*pw + xoffs, c->gy*ph + yoffs,
+	//  		c->gw*pw - hgap,  c->gh*ph - vgap,
+	//  		0);
+	//  }
+
+	// -----------------
+
+	// int mbarh = 29;
+	// //hgap = 4 * cellwidth;
+	// //vgap = 1 * cellheight;
+
+	// uw = selmon->mw - cellwidth  * m->gmw;
+	// uh = selmon->mh - cellheight * m->gmh;
+
+	// //xoffs = (selmon->mw - uw - 2*borderpx + hgap) / 2;
+	// //yoffs = (selmon->mh - uh - 2*borderpx + vgap) / 2;
+
+	// pw = ROUND(uw / m->gmw, cellwidth);
+	// ph = ROUND(uh / m->gmh, cellheight);
+
+	// // c->gy*ph + rnd(c->gh*ph) == (c->gy-2)*ph + rnd((c->gh+2)*ph)
+	// // c->gy*ph + rnd(c->gh*ph) != (c->gy-1)*ph + rnd((c->gh+1)*ph)
+
+	// // rnd(c->gh*ph) + 2*ph == rnd(c->gh*ph + 2*ph)
+	// // rnd(c->gh*ph) + 1*ph != rnd(c->gh*ph + 1*ph)
+
+	// for (c = nexttiled(m->clients); c; c = nexttiled(c->next)) {
+	// 	resize(c,
+	// 		c->gx*pw, c->gy*ph,
+	// 		c->gw*pw,  c->gh*ph,
+	// 		0);
+	// }
+
+//	/* TODO:questionable use of -1 */
+//	uw = (selmon->mw / cellwidth  / m->gmw - 1) * cellwidth  * m->gmw;  /* divide by x then multiply by */
+//	uh = (selmon->mh / cellheight / m->gmh - 1) * cellheight * m->gmh;  /* it to remove the remainder */
+//	//uw = selmon->mw - cellwidth  * m->gmw;
+//	//uh = selmon->mh - cellheight * m->gmh;
+//
+//	hgap = 4 * cellwidth;
+//	vgap = 1 * cellheight;
+//
+//	xoffs = (selmon->mw - uw - 2*borderpx + hgap) / 2;
+//	yoffs = (selmon->mh - uh - 2*borderpx + vgap) / 2;
+//
+//	pw = ROUND(uw / m->gmw, cellwidth);
+//	ph = ROUND(uh / m->gmh, cellheight);
+//
+//	for (c = nexttiled(m->clients); c; c = nexttiled(c->next)) {
+//		resize(c,
+//			c->gx*pw + xoffs, c->gy*ph + yoffs,
+//			c->gw*pw - hgap,  c->gh*ph - vgap,
+//			0);
+//	}
+}
+/* END grid */
+/* BEGIN rebirth */
+void
+savestate(const Arg *arg)
+{
+    //State state = {};
+}
+/* END rebirth */
 
 int
 main(int argc, char *argv[])
