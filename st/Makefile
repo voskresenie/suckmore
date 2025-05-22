@@ -27,14 +27,11 @@ TARGET_FILES = $(foreach f,$(FILES),$(NEW_SRC_DIR)/$(f))
 
 CLEAN_TARGETS = clean clean-src clean-build clean-orig clean-new clean-orig-src clean-new-src clean-orig-build clean-new-build
 
-#.PHONY: all install build files patch setup mod base extract fetch $(CLEAN_TARGETS)
-.PHONY: all install build files patch setup mod sourcedir builddir base extract fetch $(CLEAN_TARGETS)
-#.PHONY: all install st files $(FILES) patch setup extract fetch $(CLEAN_TARGETS)
+.PHONY: all install build files $(FILES) patch setup mod sourcedir builddir base extract fetch $(CLEAN_TARGETS)
 
 # build targets
 all: build install
 	@echo TARGET:$@
-#all: st
 
 install:
 	@echo TARGET:$@
@@ -45,11 +42,6 @@ build: sourcedir files
 	@echo TARGET:$@
 	@echo Building $(PKG) $(VERSION)...
 	makepkg -efD $(NEW_BUILD_DIR)
-
-# files: $(FILES)
-# $(FILES):
-# 	@echo Comparing file... $@
-# 	@diff -aur --color=always  $(NEW_SRC_DIR)/$@  $@  || cp $@  $(NEW_SRC_DIR)/$@
 
 files: $(TARGET_FILES)
 $(TARGET_FILES): $(NEW_SRC_DIR)/%: %
