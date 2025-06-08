@@ -10,7 +10,7 @@ static const char *fonts[] = {
 static const int fontoffset    = -1;
 static const char *prompt      = NULL;      /* -p  option; prompt to the left of input field */
 
-static const char col_gray1[]       = "#1d1f21";
+static const char col_gray1[]       = "#14161b";
 static const char col_gray2[]       = "#ff0000";
 static const char col_gray3[]       = "#c5c8c6";
 static const char col_gray4[]       = "#00ff00";
