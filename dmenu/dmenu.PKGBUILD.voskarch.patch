@@ -1,0 +1,45 @@
+--- orig/PKGBUILD	2025-02-28 18:01:17.427845510 -0600
++++ new/PKGBUILD	2025-05-31 01:41:04.237664071 -0500
+@@ -9,10 +9,12 @@
+ pkgname=dmenu
+ pkgver=5.3
+ pkgrel=3
++pkgvariant=new
+ pkgdesc='Generic menu for X'
+ url='https://tools.suckless.org/dmenu/'
+ arch=('x86_64')
+ license=('MIT')
++groups=('modified')
+ makedepends=('git')
+ depends=('sh' 'glibc' 'coreutils' 'libx11' 'libxinerama' 'libxft' 'freetype2' 'fontconfig' 'libfontconfig.so')
+ source=("git+https://git.suckless.org/dmenu#tag=${pkgver}")
+@@ -20,16 +22,16 @@
+ b2sums=('6da7112a8975c152038f7694f1a658674f92c2d5a9340f97e8b64430a2fce612c87effd361078b66ce77510d6bb6478c47ea3b1d6ee0adfafa1e8c0d62f1adb5')
+ 
+ prepare() {
+-  rm -rf "$srcdir/$pkgname-$pkgver"
+-  mv -fT "$srcdir/$pkgname" "$srcdir/$pkgname-$pkgver"
+-  cd "$srcdir/$pkgname-$pkgver"
++  # rm -rf "$srcdir/$pkgname-$pkgver.$pkgvariant"
++  mv -fT "$srcdir/$pkgname" "$srcdir/$pkgname-$pkgver.$pkgvariant"
++  cd "$srcdir/$pkgname-$pkgver.$pkgvariant"
+   echo "CPPFLAGS+=${CPPFLAGS}" >> config.mk
+   echo "CFLAGS+=${CFLAGS}" >> config.mk
+   echo "LDFLAGS+=${LDFLAGS}" >> config.mk
+ }
+ 
+ build() {
+-  cd "$srcdir/$pkgname-$pkgver"
++  cd "$srcdir/$pkgname-$pkgver.$pkgvariant"
+   make \
+ 	  X11INC=/usr/include/X11 \
+ 	  X11LIB=/usr/lib/X11 \
+@@ -37,7 +39,7 @@
+ }
+ 
+ package() {
+-  cd "$srcdir/$pkgname-$pkgver"
++  cd "$srcdir/$pkgname-$pkgver.$pkgvariant"
+   make PREFIX=/usr DESTDIR="${pkgdir}" install
+   install -Dm 644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}"
+ }
