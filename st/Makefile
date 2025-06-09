@@ -27,7 +27,7 @@ TARGET_FILES = $(foreach f,$(FILES),$(NEW_SRC_DIR)/$(f))
 
 CLEAN_TARGETS = clean clean-src clean-build clean-orig clean-new clean-orig-src clean-new-src clean-orig-build clean-new-build
 
-.PHONY: all install build files $(FILES) patch setup mod sourcedir builddir base extract fetch $(CLEAN_TARGETS)
+.PHONY: all install build files patch setup mod sourcedir builddir base extract fetch $(CLEAN_TARGETS)
 
 # build targets
 all: build install
@@ -48,6 +48,12 @@ $(TARGET_FILES): $(NEW_SRC_DIR)/%: %
 	@echo TARGET:$@
 	@echo Comparing file... $^
 	@diff -aur --color=always  $@  $^  || cp $^  $@
+
+$(FILES):
+	@echo TARGET:$@
+	@test -f ../$(PKG).$(@:$(PKG).%=%) \
+		&& ln -sT ../$(PKG).$(@:$(PKG).%=%) $@ && echo Symlinked ../$(PKG).$(@:$(PKG).%=%) to $@ \
+		|| echo File ../$(PKG).$(@:$(PKG).%=%) not found!
 
 patch: $(BUILD_PATCH) $(SOURCE_PATCH)
 	@echo TARGET:$@
