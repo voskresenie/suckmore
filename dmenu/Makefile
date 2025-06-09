@@ -130,15 +130,15 @@ $(ORIG_SRC_DIR): $(ORIG_BUILD_DIR)
 	makepkg -odD $(ORIG_BUILD_DIR)
 
 # fetch:
-# 	@echo Fetching $(PKG) from AUR...
-# 	test -d $(ORIG_BUILD_DIR) || git clone https://aur.archlinux.org/$(PKG).git $(ORIG_BUILD_DIR)
+# 	@echo Fetching $(PKG) from ABS...
+# 	test -d $(ORIG_BUILD_DIR) || git clone https://gitlab.archlinux.org/archlinux/packaging/packages/$(PKG).git $(ORIG_BUILD_DIR)
 
 fetch: $(ORIG_BUILD_DIR)
 	@echo TARGET:$@
 $(ORIG_BUILD_DIR):
 	@echo TARGET:$@
-	@echo Fetching $(PKG) from AUR...
-	test -d $(ORIG_BUILD_DIR) || git clone https://aur.archlinux.org/$(PKG).git $(ORIG_BUILD_DIR)
+	@echo Fetching $(PKG) from ABS...
+	test -d $(ORIG_BUILD_DIR) || git clone https://gitlab.archlinux.org/archlinux/packaging/packages/$(PKG).git $(ORIG_BUILD_DIR)
 
 # # clean targets
 # clean: clean-orig clean-new
