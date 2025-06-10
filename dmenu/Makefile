@@ -32,31 +32,25 @@ CLEAN_TARGETS = clean clean-src clean-build clean-new clean-orig clean-new-src c
 
 # build targets
 all: build install
-	@echo TARGET:$@
 
 install:
-	@echo TARGET:$@
 	@echo Installing $(PKG) $(VERSION)...
 	makepkg -iD $(NEW_BUILD_DIR)
 
 build: sourcedir files
-	@echo TARGET:$@
 	@echo Building $(PKG) $(VERSION)...
 	makepkg -efD $(NEW_BUILD_DIR)
 
 files: $(TARGET_FILES)
 $(TARGET_FILES): $(NEW_SRC_DIR)/%: %
-	@echo TARGET:$@
 	@echo Comparing file... $^
 	@diff -aur --color=always  $@  $^  || cp $^  $@
 
 patch: $(BUILD_PATCH) $(SOURCE_PATCH)
-	@echo TARGET:$@
 
 # TODO: potentially use something like... $(ORIG_SRC_DIR)/$(FILES)
 source-patch: $(SOURCE_PATCH)
 $(SOURCE_PATCH): $(ORIG_SRC_DIR) $(NEW_SRC_DIR)
-	@echo TARGET:$@
 	@echo Generating $(PKG) source patch...
 	# TODO: find way of stripping path from patch. Maybe symlink directory to `a` and `b` and diff?
 	@echo Symlinking source directories...
@@ -71,7 +65,6 @@ $(SOURCE_PATCH): $(ORIG_SRC_DIR) $(NEW_SRC_DIR)
 
 build-patch: $(BUILD_PATCH)
 $(BUILD_PATCH): $(ORIG_BUILD_DIR) $(NEW_BUILD_DIR)
-	@echo TARGET:$@
 	@echo Generating $(PKG) build patch...
 	# TODO: find way of stripping path from patch. Maybe symlink directory to `a` and `b` and diff?
 	@echo Symlinking build directories...
@@ -86,30 +79,23 @@ $(BUILD_PATCH): $(ORIG_BUILD_DIR) $(NEW_BUILD_DIR)
 
 # setup targets
 setup: base mod
-	@echo TARGET:$@
 
 # set up modded dmenu
 mod: builddir sourcedir $(FILES)
-	@echo TARGET:$@
 	@touch $(FILES)
 
 $(FILES):
-	@echo TARGET:$@
 	@test -f ../$(PKG).$(@:$(PKG).%=%) \
 		&& ln -sT ../$(PKG).$(@:$(PKG).%=%) $@ && echo Symlinked ../$(PKG).$(@:$(PKG).%=%) to $@ \
 		|| echo File ../$(PKG).$(@:$(PKG).%=%) not found!
 
 sourcedir: $(NEW_SRC_DIR)
-	@echo TARGET:$@
 $(NEW_SRC_DIR): $(NEW_BUILD_DIR)
-	@echo TARGET:$@
 	@echo Setting up source directory for $(PKG) $(VERSION)...
 	test -d $(NEW_SRC_DIR) || makepkg -odD $(NEW_BUILD_DIR)
 
 builddir: $(NEW_BUILD_DIR)
-	@echo TARGET:$@
 $(NEW_BUILD_DIR): $(ORIG_BUILD_DIR)
-	@echo TARGET:$@
 	@echo Duplicating $(PKG) build directory...
 	@cp -rTf $(ORIG_BUILD_DIR) $(NEW_BUILD_DIR)
 	@echo Applying PKGBUILD patch...
@@ -118,16 +104,13 @@ $(NEW_BUILD_DIR): $(ORIG_BUILD_DIR)
 
 # set up base (vanilla) dmenu
 base: fetch extract
-	@echo TARGET:$@
 
 # extract:
 # 	@echo Extracting $(PKG) $(VERSION)...
 # 	makepkg -odD $(ORIG_BUILD_DIR)
 
 extract: $(ORIG_SRC_DIR)
-	@echo TARGET:$@
 $(ORIG_SRC_DIR): $(ORIG_BUILD_DIR)
-	@echo TARGET:$@
 	@echo Extracting $(PKG) $(VERSION)...
 	makepkg -odD $(ORIG_BUILD_DIR)
 
@@ -136,9 +119,7 @@ $(ORIG_SRC_DIR): $(ORIG_BUILD_DIR)
 # 	test -d $(ORIG_BUILD_DIR) || git clone https://gitlab.archlinux.org/archlinux/packaging/packages/$(PKG).git $(ORIG_BUILD_DIR)
 
 fetch: $(ORIG_BUILD_DIR)
-	@echo TARGET:$@
 $(ORIG_BUILD_DIR):
-	@echo TARGET:$@
 	@echo Fetching $(PKG) from ABS...
 	test -d $(ORIG_BUILD_DIR) || git clone https://gitlab.archlinux.org/archlinux/packaging/packages/$(PKG).git $(ORIG_BUILD_DIR)
 	@echo Applying base PKGBUILD patch...
