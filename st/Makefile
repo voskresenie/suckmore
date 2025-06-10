@@ -25,7 +25,7 @@ PATCH_NEW := new
 FILES = config.h x.c
 TARGET_FILES = $(foreach f,$(FILES),$(NEW_SRC_DIR)/$(f))
 
-CLEAN_TARGETS = clean clean-src clean-build clean-orig clean-new clean-orig-src clean-new-src clean-orig-build clean-new-build
+CLEAN_TARGETS = clean clean-src clean-build clean-new clean-orig clean-new-src clean-orig-src clean-new-build clean-orig-build
 
 .PHONY: all install build files patch setup mod sourcedir builddir base extract fetch $(CLEAN_TARGETS)
 
@@ -141,21 +141,29 @@ $(ORIG_BUILD_DIR):
 	@echo Fetching $(PKG) from AUR...
 	test -d $(ORIG_BUILD_DIR) || git clone https://aur.archlinux.org/$(PKG).git $(ORIG_BUILD_DIR)
 
-# # clean targets
-# clean: clean-orig clean-new
+# clean targets
+clean: clean-src clean-build
 
-# clean-src: clean-orig-src clean-new-src
-# clean-build: clean-orig-build clean-new-build
+clean-src: clean-new-src clean-orig-src
+	@echo Removing source dir if empty...
+	rmdir --ignore-fail-on-non-empty $(SRC_DIR)
+clean-build: clean-new-build clean-orig-build
+	@echo Removing build dir if empty...
+	rmdir --ignore-fail-on-non-empty $(BUILD_DIR)
 
-# clean-orig: clean-orig-src clean-orig-build
-# clean-new: clean-new-src clean-new-build
+clean-new: clean-new-src clean-new-build
+clean-orig: clean-orig-src clean-orig-build
 
-# clean-orig-src:
-# 	makepkg -cD $(ORIG_BUILD_DIR)
-# clean-new-src:
-# 	makepkg -cD $(NEW_BUILD_DIR)
+clean-new-src:
+	@echo Removing modified source dir...
+	rm -rf $(NEW_SRC_DIR)
+clean-orig-src:
+	@echo Removing base source dir...
+	rm -rf $(ORIG_SRC_DIR)
 
-# clean-orig-build:
-# 	rm -rf $(ORIG_BUILD_DIR)
-# #clean-new-build:
-# #	rm -rf $(NEW_BUILD_DIR)
+clean-new-build:
+	@echo Removing modified build dir...
+	rm -rf $(NEW_BUILD_DIR)
+clean-orig-build:
+	@echo Removing base build dir...
+	rm -rf $(ORIG_BUILD_DIR)
