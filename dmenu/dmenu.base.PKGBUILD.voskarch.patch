@@ -1,0 +1,30 @@
+--- base.orig/PKGBUILD	2025-06-09 22:59:09.814672843 -0500
++++ base.new/PKGBUILD	2025-02-28 18:01:17.427845510 -0600
+@@ -20,14 +20,16 @@
+ b2sums=('6da7112a8975c152038f7694f1a658674f92c2d5a9340f97e8b64430a2fce612c87effd361078b66ce77510d6bb6478c47ea3b1d6ee0adfafa1e8c0d62f1adb5')
+ 
+ prepare() {
+-  cd ${pkgname}
++  rm -rf "$srcdir/$pkgname-$pkgver"
++  mv -fT "$srcdir/$pkgname" "$srcdir/$pkgname-$pkgver"
++  cd "$srcdir/$pkgname-$pkgver"
+   echo "CPPFLAGS+=${CPPFLAGS}" >> config.mk
+   echo "CFLAGS+=${CFLAGS}" >> config.mk
+   echo "LDFLAGS+=${LDFLAGS}" >> config.mk
+ }
+ 
+ build() {
+-  cd ${pkgname}
++  cd "$srcdir/$pkgname-$pkgver"
+   make \
+ 	  X11INC=/usr/include/X11 \
+ 	  X11LIB=/usr/lib/X11 \
+@@ -35,7 +37,7 @@
+ }
+ 
+ package() {
+-  cd ${pkgname}
++  cd "$srcdir/$pkgname-$pkgver"
+   make PREFIX=/usr DESTDIR="${pkgdir}" install
+   install -Dm 644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}"
+ }
