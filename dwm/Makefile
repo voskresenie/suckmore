@@ -5,6 +5,7 @@ REVISION := 1
 BUILD_DIR := ./build
 # SRC_DIR := ./src
 SRC_DIR := $(XDG_SRC_HOME)/$(PKG)
+PKG_FILE := $(XDG_CACHE_HOME)/makepkg/pkg/$(PKG)-$(VERSION)-$(REVISION)-x86_64.pkg.tar.zst
 
 # ORIG_BUILD_DIR := $(BUILD_DIR)/$(PKG).orig
 # NEW_BUILD_DIR := $(BUILD_DIR)/$(PKG).new
@@ -34,18 +35,19 @@ CLEAN_TARGETS = clean clean-src clean-build clean-new clean-orig clean-new-src c
 # build targets
 all: build install
 
-install:
+install: $(PKG_FILE)
 	@echo Installing $(PKG) $(VERSION)...
 	makepkg -iD $(NEW_BUILD_DIR)
 
-build: sourcedir files
+build: $(PKG_FILE)
+$(PKG_FILE): $(NEW_BUILD_DIR) $(TARGET_FILES)
 	@echo Building $(PKG) $(VERSION)...
 	makepkg -efD $(NEW_BUILD_DIR)
 
 files: $(TARGET_FILES)
 $(TARGET_FILES): $(NEW_SRC_DIR)/%: %
 	@echo Comparing file... $^
-	@diff -aur --color=always  $@  $^  || cp $^  $@
+	@diff -aur --color=always  $@  $^  && touch $@ || cp $^  $@
 
 patch: $(BUILD_PATCH) $(SOURCE_PATCH)
 
@@ -82,7 +84,7 @@ $(BUILD_PATCH): $(ORIG_BUILD_DIR) $(NEW_BUILD_DIR)
 setup: base mod
 
 # set up modded dwm
-mod: builddir sourcedir $(FILES)
+mod: $(NEW_BUILD_DIR) $(NEW_SRC_DIR) $(FILES)
 	@touch $(FILES)
 
 $(FILES):
@@ -104,7 +106,7 @@ $(NEW_BUILD_DIR): $(ORIG_BUILD_DIR)
 	@# # test -f $(PKG).PKGBUILD.voskarch.patch && patch -d $(NEW_BUILD_DIR) -Np1 -i $(PKG).PKGBUILD.voskarch.patch
 
 # set up base (vanilla) dwm
-base: fetch extract
+base: $(ORIG_BUILD_DIR) $(ORIG_SRC_DIR)
 
 # extract:
 # 	@echo Extracting $(PKG) $(VERSION)...
