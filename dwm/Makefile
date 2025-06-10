@@ -49,12 +49,6 @@ $(TARGET_FILES): $(NEW_SRC_DIR)/%: %
 	@echo Comparing file... $^
 	@diff -aur --color=always  $@  $^  || cp $^  $@
 
-$(FILES):
-	@echo TARGET:$@
-	@test -f ../$(PKG).$(@:$(PKG).%=%) \
-		&& ln -sT ../$(PKG).$(@:$(PKG).%=%) $@ && echo Symlinked ../$(PKG).$(@:$(PKG).%=%) to $@ \
-		|| echo File ../$(PKG).$(@:$(PKG).%=%) not found!
-
 patch: $(BUILD_PATCH) $(SOURCE_PATCH)
 	@echo TARGET:$@
 
@@ -94,8 +88,15 @@ setup: base mod
 	@echo TARGET:$@
 
 # set up modded dwm
-mod: builddir sourcedir
+mod: builddir sourcedir $(FILES)
 	@echo TARGET:$@
+	@touch $(FILES)
+
+$(FILES):
+	@echo TARGET:$@
+	@test -f ../$(PKG).$(@:$(PKG).%=%) \
+		&& ln -sT ../$(PKG).$(@:$(PKG).%=%) $@ && echo Symlinked ../$(PKG).$(@:$(PKG).%=%) to $@ \
+		|| echo File ../$(PKG).$(@:$(PKG).%=%) not found!
 
 sourcedir: $(NEW_SRC_DIR)
 	@echo TARGET:$@
