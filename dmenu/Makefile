@@ -19,6 +19,7 @@ NEW_BUILD_DIR := $(BUILD_DIR)/$(PKG).new
 
 SOURCE_PATCH := $(PKG).voskarch.patch
 BUILD_PATCH := $(PKG).PKGBUILD.voskarch.patch
+# patch to update base build directory, if necessary (eg to change source directory location)
 BASE_BUILD_PATCH := $(PKG).base.PKGBUILD.voskarch.patch
 PATCH_ORIG := orig
 PATCH_NEW := new
@@ -123,7 +124,7 @@ $(ORIG_BUILD_DIR):
 	@echo Fetching $(PKG) from ABS...
 	test -d $(ORIG_BUILD_DIR) || git clone https://gitlab.archlinux.org/archlinux/packaging/packages/$(PKG).git $(ORIG_BUILD_DIR)
 	@echo Applying base PKGBUILD patch...
-	@test -f $(BASE_BUILD_PATCH) && patch -d $(ORIG_BUILD_DIR) -Np1 -i ../../$(BASE_BUILD_PATCH)
+	@test -f $(BASE_BUILD_PATCH) && patch -d $(ORIG_BUILD_DIR) -Np1 -i ../../$(BASE_BUILD_PATCH) || echo No base PKGBUILD patch found
 
 # clean targets
 clean: clean-src clean-build
