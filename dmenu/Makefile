@@ -111,7 +111,7 @@ builddir: $(NEW_BUILD_DIR)
 $(NEW_BUILD_DIR): $(ORIG_BUILD_DIR)
 	@echo TARGET:$@
 	@echo Duplicating $(PKG) build directory...
-	@cp -rT $(ORIG_BUILD_DIR) $(NEW_BUILD_DIR)
+	@cp -rTf $(ORIG_BUILD_DIR) $(NEW_BUILD_DIR)
 	@echo Applying PKGBUILD patch...
 	@test -f $(BUILD_PATCH) && patch -d $(NEW_BUILD_DIR) -Np1 -i ../../$(BUILD_PATCH)
 	@# # test -f $(PKG).PKGBUILD.voskarch.patch && patch -d $(NEW_BUILD_DIR) -Np1 -i $(PKG).PKGBUILD.voskarch.patch
