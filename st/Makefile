@@ -85,11 +85,10 @@ setup: base mod
 
 # set up modded st
 mod: $(NEW_BUILD_DIR) $(NEW_SRC_DIR) $(FILES)
-	@touch $(FILES)
 
 $(FILES):
 	@test -f ../$(PKG).$(@:$(PKG).%=%) \
-		&& ln -sT ../$(PKG).$(@:$(PKG).%=%) $@ && echo Symlinked ../$(PKG).$(@:$(PKG).%=%) to $@ \
+		&& ln -sT ../$(PKG).$(@:$(PKG).%=%) $@ && touch $@ && echo Symlinked ../$(PKG).$(@:$(PKG).%=%) to $@ \
 		|| echo File ../$(PKG).$(@:$(PKG).%=%) not found!
 
 sourcedir: $(NEW_SRC_DIR)
