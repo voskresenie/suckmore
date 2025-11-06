@@ -1,0 +1,9 @@
+build/
+TODO
+
+# src files
+config.h
+st.c
+st.h
+win.h
+x.c
