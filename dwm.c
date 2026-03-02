@@ -62,7 +62,7 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel }; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeNormMute, SchemeSelMute }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
@@ -201,7 +201,7 @@ typedef struct {
 // typedef struct StateClient StateClient;
 // struct StateClient {
 // 	unsigned long XID; // see /usr/include/X11/X.h
-// 
+//
 // 	char name[256];
 // 	float mina, maxa;
 // 	int x, y, w, h;
@@ -241,8 +241,8 @@ typedef struct {
 // 	Window barwin;
 // 	const Layout *lt[2];
 // };
-// 
-// 
+//
+//
 /* END rebirth */
 
 /* function declarations */
@@ -834,6 +834,7 @@ drawbar(Monitor *m)
 	int x, w, tw = 0;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
+	int boxh = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
 	Client *c;
 
@@ -844,7 +845,7 @@ drawbar(Monitor *m)
 	if (m == selmon) { /* status is only drawn on selected monitor */
 		drw_setscheme(drw, scheme[SchemeNorm]);
 		tw = TEXTW(stext) - lrpad + 2; /* 2px right padding */
-		drw_text(drw, m->ww - tw, 0, tw, bh, 0, stext, 0);
+		drw_text(drw, m->ww - tw, 1, tw, bh, 0, stext, 0);
 	}
 
 	for (c = m->clients; c; c = c->next) {
@@ -855,24 +856,31 @@ drawbar(Monitor *m)
 	x = 0;
 	for (i = 0; i < LENGTH(tags); i++) {
 		w = TEXTW(tags[i]);
-		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
-		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);
+		int selscheme = m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm;
+		drw_setscheme(drw, scheme[selscheme]);
+
+		drw_text(drw, x, 1, w, bh, lrpad / 2, tags[i], urg & 1 << i);
+
+		if (!(m == selmon && selmon->sel && selmon->sel->tags & 1 << i))
+			if (selscheme == SchemeNorm)
+				drw_setscheme(drw, scheme[SchemeNormMute]);
+
 		if (occ & 1 << i)
-			drw_rect(drw, x + boxs, boxs, boxw, boxw,
+			drw_rect(drw, x + boxs, boxs, w-2, boxh-1,
 				m == selmon && selmon->sel && selmon->sel->tags & 1 << i,
 				urg & 1 << i);
 		x += w;
 	}
 	w = TEXTW(m->ltsymbol);
 	drw_setscheme(drw, scheme[SchemeNorm]);
-	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
+	x = drw_text(drw, x, 1, w, bh, lrpad / 2, m->ltsymbol, 0);
 
 	if ((w = m->ww - tw - x) > bh) {
 		if (m->sel) {
 			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
+			drw_text(drw, x, 1, w, bh, lrpad / 2, m->sel->name, 0);
 			if (m->sel->isfloating)
-				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
+				drw_rect(drw, x + boxs, boxs, boxw, boxh, m->sel->isfixed, 0);
 		} else {
 			drw_setscheme(drw, scheme[SchemeNorm]);
 			drw_rect(drw, x, 0, w, bh, 1, 1);
@@ -1705,7 +1713,7 @@ setup(void)
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts), fontoffset))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
-	bh = drw->fonts->h + 12;
+	bh = drw->fonts->h + 2 + 10 + 3;
 	updategeom();
 	/* init atoms */
 	utf8string = XInternAtom(dpy, "UTF8_STRING", False);
@@ -2550,7 +2558,7 @@ _gridtile(Monitor *m)
 	//  int gridcellheight = (ycells - (gridheight + 1) * vgapcells) / gridheight;   // ( 65 - ( 9 + 1) * 1) /  9 =  6, remainder: 1
 	//  // ( xgridcellsize + xgap ) * xgridcells + xgap = xcells
 	//  // xgridcellsize = ((xcells - xgap) / xgridcells) - xgap
-	
+
 	xoffs = ((screenwidth  - cellwidth  * gridcellwidth  * gridwidth ) + hgapcells * cellwidth ) / 2 - borderpx;
 	yoffs = ((screenheight - cellheight * gridcellheight * gridheight) + vgapcells * cellheight) / 2 - borderpx + mbarh;
 

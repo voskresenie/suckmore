@@ -10,16 +10,21 @@ static const int fontoffset         = -1;       /* adjust spacing between charac
 // font spacing may be able to be fixed with something like this --
 //      "c-fixed-medium-r-semicondensed--13-100-100-100-c-60-iso8859-1:size=11";
 static const char dmenufont[]       = "Inconsolata LGC:style=Bold:size=9.5:antialias=true:hinting=true";
-// static const char col_gray1[]       = "#1d1f21";    /* termbg */
+
 static const char col_gray1[]       = "#14161b";    /* termbg */
-static const char col_gray2[]       = "#ff0000";    /* unused */
-static const char col_gray3[]       = "#c5c8c6";
-static const char col_gray4[]       = "#00ff00";    /* unused */
-static const char col_cyan[]        = "#2d2f31";
+static const char col_gray2[]       = "#1c1e25";
+static const char col_gray3[]       = "#a3b0c0";    /* term light grey */
+static const char col_gray4[]       = "#bb0000";    /* term white */
+static const char col_dgrey[]       = "#465060";    /* term dark grey */
+static const char col_cyan[]        = "#588088";    /* term cyan */
+static const char col_brcyan[]      = "#78b0c0";
+
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
-	[SchemeNorm] = { col_gray3, col_gray1, col_gray1 },
-	[SchemeSel]  = { col_gray3, col_gray1, col_cyan  },
+	[SchemeNorm] = { col_gray3, col_gray2, col_gray2 },
+	[SchemeSel]  = { col_brcyan,  col_gray1, col_gray1  },
+	[SchemeNormMute] = { col_dgrey, col_gray2, col_gray2 },
+	[SchemeSelMute]  = { col_cyan,  col_gray1, col_gray1  },
 };
 
 /* BEGIN rebirth */
@@ -128,7 +133,7 @@ static const Layout layouts[] = {
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 /* consider replacing with rofi */
-static const char *dmenucmd[] = { "dmenu_run", "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray3, NULL };
+static const char *dmenucmd[] = { "dmenu_run", "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_gray2, "-sf", col_gray3, NULL };
 static const char *termcmd[]  = { "alacritty", NULL };
 
 /* list of keys may be found in <X11/keysymdef.h> */
