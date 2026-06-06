@@ -2,16 +2,16 @@ PKG := dwm
 VERSION := 6.5
 REVISION := 1
 
+SOURCE_REPO := AUR
+
+ABS_URL := https://gitlab.archlinux.org/archlinux/packaging/packages/$(PKG).git
+AUR_URL := https://aur.archlinux.org/$(PKG).git
+SOURCE_URL := $($(SOURCE_REPO)_URL)
+
 BUILD_DIR := ./build
 # SRC_DIR := ./src
 SRC_DIR := $(XDG_SRC_HOME)/$(PKG)
 PKG_FILE := $(XDG_CACHE_HOME)/makepkg/pkg/$(PKG)-$(VERSION)-$(REVISION)-x86_64.pkg.tar.zst
-
-# ORIG_BUILD_DIR := $(BUILD_DIR)/$(PKG).orig
-# NEW_BUILD_DIR := $(BUILD_DIR)/$(PKG).new
-
-# ORIG_SRC_DIR := $(SRC_DIR)/$(PKG)-$(VERSION).orig
-# NEW_SRC_DIR := $(SRC_DIR)/$(PKG)-$(VERSION).new
 
 ORIG_SRC_DIR := $(SRC_DIR)/$(PKG)-$(VERSION)
 ORIG_BUILD_DIR := $(BUILD_DIR)/$(PKG).orig
@@ -83,7 +83,7 @@ $(BUILD_PATCH): $(ORIG_BUILD_DIR) $(NEW_BUILD_DIR)
 # setup targets
 setup: base mod
 
-# set up modded dwm
+# set up modded package
 mod: $(NEW_BUILD_DIR) $(NEW_SRC_DIR) $(FILES)
 
 $(FILES):
@@ -104,26 +104,18 @@ $(NEW_BUILD_DIR): $(ORIG_BUILD_DIR)
 	@test -f $(BUILD_PATCH) && patch -d $(NEW_BUILD_DIR) -Np1 -i ../../$(BUILD_PATCH)
 	@# # test -f $(PKG).PKGBUILD.voskarch.patch && patch -d $(NEW_BUILD_DIR) -Np1 -i $(PKG).PKGBUILD.voskarch.patch
 
-# set up base (vanilla) dwm
+# set up base (vanilla) package
 base: $(ORIG_BUILD_DIR) $(ORIG_SRC_DIR)
-
-# extract:
-# 	@echo Extracting $(PKG) $(VERSION)...
-# 	makepkg -odD $(ORIG_BUILD_DIR)
 
 extract: $(ORIG_SRC_DIR)
 $(ORIG_SRC_DIR): $(ORIG_BUILD_DIR)
 	@echo Extracting $(PKG) $(VERSION)...
 	makepkg -odD $(ORIG_BUILD_DIR)
 
-# fetch:
-# 	@echo Fetching $(PKG) from AUR...
-# 	test -d $(ORIG_BUILD_DIR) || git clone https://aur.archlinux.org/$(PKG).git $(ORIG_BUILD_DIR)
-
 fetch: $(ORIG_BUILD_DIR)
 $(ORIG_BUILD_DIR):
-	@echo Fetching $(PKG) from AUR...
-	test -d $(ORIG_BUILD_DIR) || git clone https://aur.archlinux.org/$(PKG).git $(ORIG_BUILD_DIR)
+	@echo Fetching $(PKG) from $(SOURCE_REPO)...
+	test -d $(ORIG_BUILD_DIR) || git clone $(SOURCE_URL) $(ORIG_BUILD_DIR)
 	@echo Applying base PKGBUILD patch...
 	@test -f $(BASE_BUILD_PATCH) && patch -d $(ORIG_BUILD_DIR) -Np1 -i ../../$(BASE_BUILD_PATCH) || echo No base PKGBUILD patch found
 
