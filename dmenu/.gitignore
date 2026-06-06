@@ -1,8 +1,0 @@
-build/
-TODO
-
-# src files
-config.h
-dmenu.c
-drw.c
-drw.h
