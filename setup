@@ -1,0 +1,75 @@
+#!/usr/bin/sh
+#
+# setup [WIP]
+#
+# set up new suckless package by pulling arch linux package with ABS / AUR and
+# generating patching Makefile from template.
+#
+MKFILETMPL=Makefile.tmpl
+
+PRFX="$(tput setaf 12)::$(tput op)"
+WRNPRFX="$(tput setaf 11)!!$(tput op)"
+ERRPRFX="$(tput setaf 9)??$(tput op)"
+
+echo "$PRFX setting up packages: $@"
+for pkg in $@; do
+  pkgdir=test-$pkg
+
+  echo "$PRFX setting up $pkg..."
+  mkdir -v $pkgdir || {
+    echo "$WRNPRFX directory already exists, skipping..."
+    continue
+  }
+
+  echo "$PRFX fetching package info using yay..."
+  i="$(yay -Si $pkg | sed -ne 's/^Repository *: \(.*\)$/\1/p' -e 's/^Version *: \([^-]*\)-\(.*\)$/\1 \2/p')"
+
+  # TODO: find better way of doing this if possible within POSIX sh
+  sedstr='^\([^ ]*\) \([^ ]*\) \([^ ]*\)$'
+  srcrepo="$(echo $i | sed -ne "s/${sedstr}/\1/p")"
+  absaur="$([ "$srcrepo" = aur ] && echo AUR || echo ABS)"
+  version="$(echo $i | sed -ne "s/${sedstr}/\2/p")"
+  revision="$(echo $i | sed -ne "s/${sedstr}/\3/p")"
+
+  echo "$PRFX copying Makefile template to $pkgdir/Makefile..."
+  cp -v --update=none-fail $MKFILETMPL $pkgdir/Makefile || {
+    echo "$ERRPRFX failed to copy Makefile!"
+    continue
+  }
+
+  echo "$PRFX updating $pkgdir/Makefile with package info..."
+  echo "PKG := $pkg"
+  echo "VERSION := $version"
+  echo "REVISION := $revision"
+  echo "SOURCE_REPO := $absaur"
+
+  fs='config.h'
+  sed -e "s/^PKG := .*$/PKG := $pkg/" \
+      -e "s/^VERSION := .*$/VERSION := $version/" \
+      -e "s/^REVISION := .*$/REVISION := $revision/" \
+      -e "s/^SOURCE_REPO := .*$/SOURCE_REPO := $absaur/" \
+      -e "s/^FILES = .*$/FILES = $fs/" \
+      -i $pkgdir/Makefile
+  echo "$PRFX successfully wrote $pkgdir/Makefile"
+
+  echo "$PRFX fetching $pkg package files..."
+  make -C $pkgdir base || {
+    echo "$ERRPRFX failed to fetch package files!"
+    continue
+  }
+  echo "$PRFX successfully fetched package files"
+
+  # TODO: figure out consistent way of getting list of source files
+  # ls ~/.local/src/${pkg}/${pkg}*/*.{c,h}
+  # ~/.local/src/dwm/dwm-6.5/*.{c,h}
+  # ~/.local/src/st/st-0.9.2/*.{c,h}
+  # ~/.local/src/surf/surf-2.1/*.{c,h}
+  # ~/.local/src/dmenu/dmenu-5.3/*.{c,h}
+  # ~/.local/src/pinentry-dmenu/pinentry-dmenu-0.2.2/*.{c,h}
+  # ~/.local/src/nsxiv/nsxiv/*.{c,h}
+  # ~/.local/src/slock/slock/*.{c,h}
+  # ~/.local/src/slstatus/slstatus-1.0/*.{c,h}
+  # ~/.local/src/sxhkd/sxhkd/src/*.{c,h}          <------- odd one out
+
+  echo "$PRFX finished setting up ${pkg}!"
+done
