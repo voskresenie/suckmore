@@ -70,6 +70,7 @@ for pkg in $@; do
   # ~/.local/src/slock/slock/*.{c,h}
   # ~/.local/src/slstatus/slstatus-1.0/*.{c,h}
   # ~/.local/src/sxhkd/sxhkd/src/*.{c,h}          <------- odd one out
+  # for this last one, may need to manually change ORIG_SRC_DIR and NEW_SRC_DIR
 
   echo "$PRFX finished setting up ${pkg}!"
 done
