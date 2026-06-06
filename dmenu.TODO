@@ -1,0 +1,6 @@
+dmenu
+---
+1. Patch to enable hidden fields:
+    a. Hidden value to return when item is selected
+        eg "My Item" -> "mysecretvalue"
+    b. Hidden value that can be filtered on without being displayed

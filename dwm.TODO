@@ -1,0 +1,33 @@
+dwm
+--- ------- ------- ------- ------- ------- ------- ------- ------- ----
+1. Add something to allow setting  different views / tags as one of AOEU
+    ie  have 9 different panes,  accessible via MOD-N,  then commands to
+    set them as the tags viewable with MOD-A/O/E/U
+2. Increase size of highlight box above tags (indicating whether tag has
+    windows  attached to it,  and whether the tag is  currently selected
+3. Create function/shortcut for 're-tiling' all open windows, as if they
+    were opened for the first time.
+4. dwm leader/prefix keybinding,  to enable more bindings while avoiding
+    conflicts with other bindings.
+5. tag-specific positioning in grid. so that a window can be tagged with
+    multiple tags and be in different positions in each tag.
+      nitty-gritty:
+      * when switching or adding tags,  set window position based on its
+        position in the active tag
+      * when  multiple tags are selected and each tag  contains the same
+        window,  and that window has  different positions  in  each tag,
+        ... [TBD]
+6. Keybindings to add to config.h:
+    * screenshot / scrot
+    * slock
+    * audioctl (?)
+    * darkman toggle (?)
+7. dwm patch to allow tags beyond 9,  which are only  visible when there
+    are windows within them.
+8. Apply dwm.swallow patch
+    Swallowing makes it so that when an application is opened from a
+    terminal, the application window will replace the terminal window,
+    until the application is closed, at which time the terminal window
+    will reappear.
+    [1] https://dwm.suckless.org/patches/swallow/
+    [2] https://www.youtube.com/watch?v=92uo5OBOKfY
